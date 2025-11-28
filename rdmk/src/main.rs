@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::{
-    fs, os::unix::fs::symlink, path::{Path, PathBuf}
+    fs,
+    os::unix::fs::symlink,
+    path::{Path, PathBuf},
 };
 
 extern crate dirs;
@@ -68,14 +70,16 @@ fn move_files_to_dotfiles(source_path: &str, target_dir: &Path) {
     symlink(&target_path, source_path).expect("move_files_to_dotfiles: 创建软链接失败!");
 }
 
-// 处理路径中的隐藏文件转换成非隐藏文件
+// 路径中第一级目录如果是隐藏文件则改成非隐藏
 fn remove_config_path_with_dot(src_path: &Path, dest_path: &mut PathBuf) {
-    for component in src_path.components() {
-        let component_str = component.as_os_str().to_string_lossy();
-        if component_str == ".config" {
-            dest_path.push(&component_str[1..]);
-        } else {
-            dest_path.push(component);
-        }
+    let mut components = src_path.components();
+    let component = components
+        .next()
+        .expect("remove_config_path_with_dot: 获取第一级路径失败");
+    let component_str = component.as_os_str().to_string_lossy();
+    if !component_str.starts_with('.') {
+        dest_path.push(component);
+    } else {
+        dest_path.push(&component_str[1..]);
     }
 }
